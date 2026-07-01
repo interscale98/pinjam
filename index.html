@@ -250,9 +250,12 @@ function nowTimeStr(){
 }
 function fmtTanggal(t){
   if(!t) return '';
-  const parts = String(t).slice(0,10).split('-');
-  if(parts.length < 3) return t;
-  return parts[2]+'/'+parts[1]+'/'+parts[0];
+
+  const d = new Date(t);
+
+  return d.toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta'
+  });
 }
 function driveThumb(url){
   if(!url) return '';
