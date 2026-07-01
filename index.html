@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peminjaman Barang</title>
+<style>
+  :root{
+    --bg: #F5F2EC;
+    --card: #FFFFFF;
+    --ink: #2A2823;
+    --ink-soft: #6B675E;
+    --line: #E4DFD3;
+    --accent: #0F6E56;
+    --accent-soft: #E1F5EE;
+    --accent-ink: #085041;
+    --warn: #993C1D;
+    --warn-soft: #FAECE7;
+    --radius: 14px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    display:flex;
+    justify-content:center;
+    padding: 24px 16px 60px;
+  }
+  .app{ width:100%; max-width: 420px; }
+  h1{ font-size: 20px; font-weight:600; margin: 0 0 4px; }
+  .sub{ color: var(--ink-soft); font-size: 14px; margin: 0 0 20px; }
+  .card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .btn{
+    display:block;
+    width:100%;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor:pointer;
+    text-align:center;
+    box-sizing:border-box;
+  }
+  .btn-primary{ background: var(--accent); color: #fff; }
+  .btn-primary:active{ opacity:0.85; }
+  .btn-primary:disabled{ opacity:0.6; }
+  .btn-secondary{ background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .btn-ghost{ background: transparent; color: var(--accent-ink); border: none; padding: 8px 0; font-weight:500; font-size:14px; }
+  .btn-stack{ display:flex; flex-direction:column; gap:10px; }
+  label{ display:block; font-size: 13px; color: var(--ink-soft); margin: 14px 0 6px; }
+  label:first-child{ margin-top:0; }
+  input[type=text], input[type=date], input[type=time]{
+    width:100%;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-size: 15px;
+    background: #FBFAF7;
+    color: var(--ink);
+  }
+  input:focus{ outline: 2px solid var(--accent); outline-offset:1px; }
+  .photo-box{
+    border: 1.5px dashed var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    cursor:pointer;
+    background: #FBFAF7;
+  }
+  .photo-preview{ width:100%; border-radius:10px; margin-top:10px; display:none; }
+  .item-row{
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .item-thumb{ width:44px; height:44px; border-radius:8px; background:var(--accent-soft); flex-shrink:0; object-fit:cover; }
+  .item-info{ flex:1; min-width:0; }
+  .item-name{ font-weight:600; font-size:14px; margin:0; }
+  .item-meta{ font-size:12px; color:var(--ink-soft); margin:2px 0 0; }
+  .badge{ font-size:11px; padding: 3px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-ink); font-weight:600; white-space:nowrap; }
+  .badge-done{ background:#EEEDFE; color:#3C3489; }
+  .empty{ text-align:center; color: var(--ink-soft); font-size:14px; padding: 24px 8px; }
+  .status-msg{ text-align:center; padding: 30px 10px 10px; }
+  .status-msg .icon{ width:52px; height:52px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px; font-weight:600; }
+  .hidden{ display:none !important; }
+  .loading{ text-align:center; color: var(--ink-soft); font-size:14px; padding: 20px; }
+  .small-note{ font-size:12px; color:var(--ink-soft); margin-top:10px; text-align:center; }
+  .warn-banner{ background: var(--warn-soft); color: var(--warn); font-size:13px; padding: 10px 12px; border-radius: 10px; margin-bottom: 16px; }
+  a.sheet-link{ color: var(--accent-ink); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="config-warning" class="warn-banner hidden">
+    Aplikasi belum terhubung ke Google Sheets. Tempel URL script di bagian SCRIPT_URL pada kode.
+  </div>
+
+  <div id="view-home">
+    <h1>Peminjaman barang</h1>
+    <p class="sub">Pilih salah satu di bawah ini.</p>
+    <div class="btn-stack">
+      <button class="btn btn-primary" onclick="showView('pinjam')">Pinjam barang</button>
+      <button class="btn btn-secondary" onclick="showView('kembalikan-search')">Kembalikan barang</button>
+      <button class="btn btn-ghost" onclick="openStatus()">Lihat barang yang masih dipinjam</button>
+      <button class="btn btn-ghost" onclick="openRiwayat()">Lihat riwayat lengkap</button>
+    </div>
+  </div>
+
+  <div id="view-pinjam" class="hidden">
+    <h1>Pinjam barang</h1>
+    <p class="sub">Isi data di bawah lalu ambil foto barangnya.</p>
+    <div class="card">
+      <label>Nama peminjam</label>
+      <input type="text" id="p-nama" placeholder="Nama lengkap">
+
+      <label>Divisi</label>
+      <input type="text" id="p-divisi" placeholder="Contoh: Teknisi, Marketing">
+
+      <label>Nama barang</label>
+      <input type="text" id="p-barang" placeholder="Contoh: proyektor, kunci ruang A">
+
+      <label>Tanggal</label>
+      <input type="date" id="p-tanggal">
+
+      <label>Jam</label>
+      <input type="time" id="p-jam">
+
+      <label>Foto barang</label>
+      <div class="photo-box" onclick="startCamera('pinjam')">
+        <span id="p-foto-label">Ketuk untuk buka kamera</span>
+        <img id="p-foto-preview" class="photo-preview">
+      </div>
+      <input type="file" id="p-foto-fallback" accept="image/*" capture="environment" class="hidden">
+    </div>
+    <div class="btn-stack">
+      <button class="btn btn-primary" id="p-submit" onclick="submitPinjam()">Pinjam sekarang</button>
+      <button class="btn btn-ghost" onclick="showView('home')">Batal</button>
+    </div>
+  </div>
+
+  <div id="view-pinjam-done" class="hidden">
+    <div class="status-msg">
+      <div class="icon">✓</div>
+      <h1>Berhasil dicatat</h1>
+      <p class="sub" id="pinjam-done-text"></p>
+    </div>
+    <button class="btn btn-primary" onclick="showView('home')">Selesai</button>
+  </div>
+
+  <div id="view-kembalikan-search" class="hidden">
+    <h1>Kembalikan barang</h1>
+    <p class="sub">Masukkan nama peminjam untuk mencari barang yang sedang dipinjam.</p>
+    <div class="card">
+      <label>Nama peminjam</label>
+      <input type="text" id="k-nama" placeholder="Nama lengkap" onkeydown="if(event.key==='Enter')searchKembalikan()">
+    </div>
+    <div class="btn-stack">
+      <button class="btn btn-primary" onclick="searchKembalikan()">Cari</button>
+      <button class="btn btn-ghost" onclick="showView('home')">Batal</button>
+    </div>
+  </div>
+
+  <div id="view-kembalikan-list" class="hidden">
+    <h1>Barang milik <span id="k-nama-title"></span></h1>
+    <p class="sub">Pilih barang yang ingin dikembalikan.</p>
+    <div id="k-list"></div>
+    <button class="btn btn-ghost" onclick="showView('home')">Kembali ke menu utama</button>
+  </div>
+
+  <div id="view-kembalikan-done" class="hidden">
+    <div class="status-msg">
+      <div class="icon">✓</div>
+      <h1>Barang telah dikembalikan</h1>
+      <p class="sub" id="kembali-done-text"></p>
+    </div>
+    <button class="btn btn-primary" onclick="showView('home')">Selesai</button>
+  </div>
+
+  <div id="view-status" class="hidden">
+    <h1>Sedang dipinjam</h1>
+    <p class="sub">Daftar semua barang yang belum dikembalikan.</p>
+    <div id="status-list"></div>
+    <button class="btn btn-ghost" onclick="showView('home')">Kembali ke menu utama</button>
+  </div>
+
+  <div id="view-riwayat" class="hidden">
+    <h1>Riwayat lengkap</h1>
+    <p class="sub">Semua transaksi peminjaman, dari yang terbaru.</p>
+    <div id="riwayat-list"></div>
+    <a class="sheet-link" href="#" onclick="openSheetWithPassword(event)">Buka spreadsheet lengkap ↗</a>
+    <br><br>
+    <button class="btn btn-ghost" onclick="showView('home')">Kembali ke menu utama</button>
+  </div>
+
+  <div id="camera-overlay" class="hidden" style="position:fixed;inset:0;background:#000;z-index:100;display:flex;flex-direction:column;">
+    <video id="camera-video" autoplay playsinline muted style="flex:1;width:100%;object-fit:cover;background:#000;"></video>
+    <img id="camera-snapshot" class="hidden" style="flex:1;width:100%;object-fit:cover;">
+    <div style="padding:18px 20px 28px;display:flex;justify-content:space-between;align-items:center;background:#000;">
+      <button id="cam-cancel" style="background:transparent;border:none;color:#fff;font-size:15px;padding:10px;">Batal</button>
+      <button id="cam-shoot" style="width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid #666;"></button>
+      <button id="cam-retake" class="hidden" style="background:transparent;border:none;color:#fff;font-size:15px;padding:10px;">Ambil ulang</button>
+    </div>
+    <div id="cam-confirm-bar" class="hidden" style="padding:0 20px 24px;background:#000;">
+      <button class="btn btn-primary" id="cam-use">Gunakan foto ini</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// GANTI URL DI BAWAH INI dengan URL Web App hasil deploy
+// Google Apps Script kamu (lihat PANDUAN-SETUP.md)
+// =========================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyfLOn9Y9UDT_ZPGpfPKAKfvyHWIO587QF_HUAyh3XTACuqa4meAnWJ6SABKfr6Q5MF/exec';
+
+if(SCRIPT_URL.includes('PASTE_URL')){
+  document.getElementById('config-warning').classList.remove('hidden');
+}
+
+let currentFoto = null;
+
+function showView(name){
+  document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById('view-'+name).classList.remove('hidden');
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function nowTimeStr(){
+  const d = new Date();
+  return d.toTimeString().slice(0,5);
+}
+function fmtTanggal(t){
+  if(!t) return '';
+  const parts = String(t).slice(0,10).split('-');
+  if(parts.length < 3) return t;
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+function driveThumb(url){
+  if(!url) return '';
+  const m = url.match(/id=([^&]+)/);
+  if(!m) return '';
+  return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';
+}
+
+document.getElementById('p-tanggal').value = todayStr();
+document.getElementById('p-jam').value = nowTimeStr();
+
+function compressImage(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 480;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('p-foto-fallback').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  document.getElementById('p-foto-label').textContent = 'Memproses foto...';
+  currentFoto = await compressImage(file);
+  const preview = document.getElementById('p-foto-preview');
+  preview.src = currentFoto;
+  preview.style.display = 'block';
+  document.getElementById('p-foto-label').textContent = 'Ketuk untuk ganti foto';
+});
+
+// ---- Kamera langsung di dalam halaman ----
+let camStream = null;
+let camCapturedDataUrl = null;
+let camContext = null;
+let camReturnCallback = null;
+
+const camOverlay = document.getElementById('camera-overlay');
+const camVideo = document.getElementById('camera-video');
+const camSnapshot = document.getElementById('camera-snapshot');
+const camShoot = document.getElementById('cam-shoot');
+const camRetake = document.getElementById('cam-retake');
+const camCancel = document.getElementById('cam-cancel');
+const camUse = document.getElementById('cam-use');
+const camConfirmBar = document.getElementById('cam-confirm-bar');
+
+async function startCamera(context, onCaptured){
+  camContext = context;
+  camReturnCallback = onCaptured || null;
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    fallbackToFileInput();
+    return;
+  }
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false
+    });
+  }catch(err){
+    fallbackToFileInput();
+    return;
+  }
+
+  camVideo.srcObject = camStream;
+  camVideo.classList.remove('hidden');
+  camSnapshot.classList.add('hidden');
+  camShoot.classList.remove('hidden');
+  camRetake.classList.add('hidden');
+  camConfirmBar.classList.add('hidden');
+  camOverlay.classList.remove('hidden');
+}
+
+function fallbackToFileInput(){
+  if(camContext === 'pinjam'){
+    document.getElementById('p-foto-fallback').click();
+  }else if(camReturnCallback){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      const foto = file ? await compressImage(file) : null;
+      camReturnCallback(foto);
+    };
+    input.click();
+  }
+}
+
+function stopCameraStream(){
+  if(camStream){
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+  }
+}
+
+camShoot.addEventListener('click', () => {
+  const canvas = document.createElement('canvas');
+  const maxW = 480;
+  const scale = Math.min(1, maxW / camVideo.videoWidth);
+  canvas.width = camVideo.videoWidth * scale;
+  canvas.height = camVideo.videoHeight * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(camVideo, 0, 0, canvas.width, canvas.height);
+  camCapturedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+  camSnapshot.src = camCapturedDataUrl;
+  camSnapshot.classList.remove('hidden');
+  camVideo.classList.add('hidden');
+  camShoot.classList.add('hidden');
+  camRetake.classList.remove('hidden');
+  camConfirmBar.classList.remove('hidden');
+});
+
+camRetake.addEventListener('click', () => {
+  camCapturedDataUrl = null;
+  camSnapshot.classList.add('hidden');
+  camVideo.classList.remove('hidden');
+  camShoot.classList.remove('hidden');
+  camRetake.classList.add('hidden');
+  camConfirmBar.classList.add('hidden');
+});
+
+camCancel.addEventListener('click', () => {
+  stopCameraStream();
+  camOverlay.classList.add('hidden');
+});
+
+camUse.addEventListener('click', () => {
+  stopCameraStream();
+  camOverlay.classList.add('hidden');
+
+  if(camContext === 'pinjam'){
+    currentFoto = camCapturedDataUrl;
+    const preview = document.getElementById('p-foto-preview');
+    preview.src = currentFoto;
+    preview.style.display = 'block';
+    document.getElementById('p-foto-label').textContent = 'Ketuk untuk ganti foto';
+  }else if(camReturnCallback){
+    camReturnCallback(camCapturedDataUrl);
+  }
+});
+
+// ---- Komunikasi ke Google Sheets (lewat Apps Script) ----
+async function apiList(){
+  const res = await fetch(SCRIPT_URL, { method: 'GET' });
+  const json = await res.json();
+  if(!json.success) throw new Error(json.error || 'Gagal mengambil data');
+  return json.data;
+}
+async function apiPost(payload){
+  const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+  const json = await res.json();
+  if(!json.success) throw new Error(json.error || 'Gagal menyimpan data');
+  return json;
+}
+
+async function submitPinjam(){
+  const nama = document.getElementById('p-nama').value.trim();
+  const divisi = document.getElementById('p-divisi').value.trim();
+  const barang = document.getElementById('p-barang').value.trim();
+  const tanggal = document.getElementById('p-tanggal').value;
+  const jam = document.getElementById('p-jam').value;
+
+  const kosong = [];
+  if(!nama) kosong.push('nama peminjam');
+  if(!divisi) kosong.push('divisi');
+  if(!barang) kosong.push('nama barang');
+  if(!tanggal) kosong.push('tanggal');
+  if(!jam) kosong.push('jam');
+  if(!currentFoto) kosong.push('foto barang');
+
+  if(kosong.length > 0){
+    alert('Mohon lengkapi dulu: ' + kosong.join(', ') + '.');
+    return;
+  }
+
+  const btn = document.getElementById('p-submit');
+  btn.textContent = 'Menyimpan...';
+  btn.disabled = true;
+
+  try{
+    const id = 'l' + Date.now() + Math.random().toString(36).slice(2,7);
+    await apiPost({
+      action: 'pinjam', id, nama, divisi, barang,
+      tanggalPinjam: tanggal, jamPinjam: jam, foto: currentFoto
+    });
+
+    document.getElementById('pinjam-done-text').textContent =
+      nama + ' (' + divisi + ') meminjam "' + barang + '" pada ' + fmtTanggal(tanggal) + ' jam ' + jam + '.';
+    showView('pinjam-done');
+
+    document.getElementById('p-nama').value = '';
+    document.getElementById('p-divisi').value = '';
+    document.getElementById('p-barang').value = '';
+    document.getElementById('p-tanggal').value = todayStr();
+    document.getElementById('p-jam').value = nowTimeStr();
+    document.getElementById('p-foto-preview').style.display = 'none';
+    document.getElementById('p-foto-label').textContent = 'Ketuk untuk ambil foto';
+    currentFoto = null;
+  }catch(err){
+    alert('Gagal menyimpan data: ' + err.message);
+  }finally{
+    btn.textContent = 'Pinjam sekarang';
+    btn.disabled = false;
+  }
+}
+
+async function searchKembalikan(){
+  const nama = document.getElementById('k-nama').value.trim();
+  if(!nama){
+    alert('Masukkan nama peminjam.');
+    return;
+  }
+  document.getElementById('k-nama-title').textContent = nama;
+  showView('kembalikan-list');
+  const list = document.getElementById('k-list');
+  list.innerHTML = '<div class="loading">Mencari...</div>';
+
+  try{
+    const data = await apiList();
+    const items = data.filter(x => x.status === 'dipinjam' && String(x.nama).toLowerCase().includes(nama.toLowerCase()));
+
+    if(items.length === 0){
+      list.innerHTML = '<div class="empty">Tidak ada barang yang sedang dipinjam atas nama ini.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        '<div class="item-info">' +
+          '<p class="item-name">' + escapeHtml(item.barang) + '</p>' +
+          '<p class="item-meta">Dipinjam ' + fmtTanggal(item.tanggalPinjam) + ' jam ' + item.jamPinjam + '</p>' +
+        '</div>' +
+        '<button class="btn btn-secondary" style="width:auto;padding:8px 14px;font-size:13px;" onclick="openReturn(\'' + item.id + '\', \'' + escapeHtml(item.barang).replace(/'/g,"\\'") + '\')">Kembalikan</button>';
+      list.appendChild(row);
+    });
+  }catch(err){
+    list.innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function openReturn(id, barang){
+  const ok = confirm('Kembalikan "' + barang + '" sekarang? Selanjutnya kamera akan terbuka untuk foto kondisi barang.');
+  if(!ok) return;
+  startCamera('kembali', async (foto) => {
+    await finishReturn(id, barang, foto);
+  });
+}
+
+async function finishReturn(id, barang, foto){
+  const tanggalKembali = todayStr();
+  const jamKembali = nowTimeStr();
+  try{
+    await apiPost({ action: 'kembalikan', id, tanggalKembali, jamKembali, foto });
+    document.getElementById('kembali-done-text').textContent =
+      '"' + barang + '" telah dikembalikan pada ' + fmtTanggal(tanggalKembali) + ' jam ' + jamKembali + '.';
+    showView('kembalikan-done');
+  }catch(err){
+    alert('Gagal menyimpan pengembalian: ' + err.message);
+  }
+}
+
+async function openStatus(){
+  showView('status');
+  const list = document.getElementById('status-list');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+  try{
+    const data = await apiList();
+    const items = data.filter(x => x.status === 'dipinjam')
+      .sort((a,b) => (b.tanggalPinjam+b.jamPinjam).localeCompare(a.tanggalPinjam+a.jamPinjam));
+
+    if(items.length === 0){
+      list.innerHTML = '<div class="empty">Tidak ada barang yang sedang dipinjam saat ini.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        (item.fotoPinjam ? '<img class="item-thumb" src="'+driveThumb(item.fotoPinjam)+'">' : '<div class="item-thumb"></div>') +
+        '<div class="item-info">' +
+          '<p class="item-name">' + escapeHtml(item.barang) + '</p>' +
+          '<p class="item-meta">' + escapeHtml(item.nama) + (item.divisi ? ' &middot; ' + escapeHtml(item.divisi) : '') + ' &middot; ' + fmtTanggal(item.tanggalPinjam) + ' jam ' + item.jamPinjam + '</p>' +
+        '</div>' +
+        '<span class="badge">Dipinjam</span>';
+      list.appendChild(row);
+    });
+  }catch(err){
+    list.innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+async function openRiwayat(){
+  showView('riwayat');
+  const list = document.getElementById('riwayat-list');
+  list.innerHTML = '<div class="loading">Memuat...</div>';
+  try{
+    const data = await apiList();
+    const items = data.sort((a,b) => (b.tanggalPinjam+b.jamPinjam).localeCompare(a.tanggalPinjam+a.jamPinjam));
+
+    if(items.length === 0){
+      list.innerHTML = '<div class="empty">Belum ada riwayat peminjaman.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    items.forEach(item => {
+      const isDone = item.status === 'dikembalikan';
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        (item.fotoPinjam ? '<a href="'+item.fotoPinjam+'" target="_blank"><img class="item-thumb" src="'+driveThumb(item.fotoPinjam)+'"></a>' : '<div class="item-thumb"></div>') +
+        '<div class="item-info">' +
+          '<p class="item-name">' + escapeHtml(item.barang) + '</p>' +
+          '<p class="item-meta">' + escapeHtml(item.nama) + (item.divisi ? ' &middot; ' + escapeHtml(item.divisi) : '') + ' &middot; pinjam ' + fmtTanggal(item.tanggalPinjam) + ' jam ' + item.jamPinjam +
+          (isDone ? '<br>kembali ' + fmtTanggal(item.tanggalKembali) + ' jam ' + item.jamKembali : '') +
+          '</p>' +
+        '</div>' +
+        '<span class="badge ' + (isDone ? 'badge-done' : '') + '">' + (isDone ? 'Selesai' : 'Dipinjam') + '</span>';
+      list.appendChild(row);
+    });
+  }catch(err){
+    list.innerHTML = '<div class="empty">Gagal memuat data: ' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function openSheetWithPassword(e){
+  e.preventDefault();
+  const input = prompt('Masukkan password untuk membuka spreadsheet:');
+  if(input === null) return;
+  if(input === 'ap'){
+    window.open('https://docs.google.com/spreadsheets/d/1TIA3Ro6ncltWVzxGFfiy6Y1BHh4Qyeiw2X-QP372h1M/edit?usp=sharing', '_blank');
+  }else{
+    alert('Password salah.');
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
