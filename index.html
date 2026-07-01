@@ -241,12 +241,18 @@ function showView(name){
 }
 
 function todayStr(){
-  const d = new Date();
-  return d.toISOString().slice(0,10);
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Jakarta"
+  });
 }
+
 function nowTimeStr(){
-  const d = new Date();
-  return d.toTimeString().slice(0,5);
+  return new Date().toLocaleTimeString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
 }
 function fmtTanggal(t){
   if(!t) return '';
