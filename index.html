@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>interSkala — Dashboard</title>
+<title>Gudang Alat — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -41,44 +41,105 @@
   }
 
   /* ===== TOAST NOTIFICATION ===== */
-  #app-toast {
+  .toast-container {
     position: fixed;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    background: var(--surface);
-    border: 1px solid var(--ok);
-    color: var(--ink);
-    padding: 13px 22px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    top: 80px;
+    right: 20px;
     z-index: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    max-width: 90vw;
-    text-align: center;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 10px;
+    max-width: 380px;
+    width: 100%;
+    pointer-events: none;
   }
-  #app-toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  #app-toast .toast-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--ok);
-    color: #0E1A12;
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 12px;
+    gap: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    animation: slideInToast 0.4s ease, fadeOutToast 0.4s ease 3s forwards;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+  }
+  .toast .icon {
+    font-size: 22px;
     flex-shrink: 0;
+  }
+  .toast .icon.success { color: var(--ok); }
+  .toast .icon.error { color: var(--stamp); }
+  .toast .icon.info { color: var(--accent); }
+  .toast .message {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .toast .message small {
+    font-weight: 400;
+    color: var(--ink-soft);
+    font-size: 12px;
+    display: block;
+    margin-top: 2px;
+  }
+  .toast .close-toast {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    pointer-events: auto;
+    transition: color 0.2s;
+  }
+  .toast .close-toast:hover {
+    color: var(--ink);
+  }
+  /* Progress bar di bawah toast */
+  .toast .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    animation: progressBar 3s linear forwards;
+  }
+  .toast .progress-bar.success { background: var(--ok); }
+  .toast .progress-bar.error { background: var(--stamp); }
+
+  @keyframes slideInToast {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOutToast {
+    to { opacity: 0; transform: translateX(60px); }
+  }
+  @keyframes progressBar {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  @media (max-width: 480px) {
+    .toast-container {
+      top: 70px;
+      right: 10px;
+      left: 10px;
+      max-width: none;
+      width: auto;
+    }
+    .toast {
+      padding: 14px 16px;
+    }
+    .toast .icon {
+      font-size: 18px;
+    }
+    .toast .message {
+      font-size: 13px;
+    }
   }
 
   /* ===== SIDEBAR ===== */
@@ -169,7 +230,6 @@
     color: var(--ink-faint);
   }
   
-  /* ===== LOGIN SECTION ===== */
   .sidebar-user {
     border-top: 1px solid var(--line);
     padding-top: 16px;
@@ -229,7 +289,6 @@
     color: #fff;
   }
 
-  /* ===== MAIN CONTENT ===== */
   .main {
     flex: 1;
     margin-left: var(--sidebar-width);
@@ -240,7 +299,6 @@
     margin-left: 0;
   }
   
-  /* ===== HEADER ===== */
   .header {
     height: var(--header-height);
     background: var(--bg-2);
@@ -304,14 +362,12 @@
     50% { opacity: 0.3; }
   }
 
-  /* ===== CONTENT AREA ===== */
   .content {
     padding: 24px;
     max-width: 1200px;
     margin: 0 auto;
   }
   
-  /* ===== STATS CARDS ===== */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -341,7 +397,6 @@
   .stat-card .value.ok { color: var(--ok); }
   .stat-card .value.stamp { color: var(--stamp); }
 
-  /* ===== CARDS ===== */
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -394,7 +449,6 @@
     text-underline-offset: 2px;
   }
 
-  /* ===== LOADING OVERLAY ===== */
   .loading-overlay {
     position: fixed;
     inset: 0;
@@ -437,7 +491,6 @@
     100% { content: ''; }
   }
 
-  /* ===== TABLE / LIST ===== */
   .item-row {
     background: var(--surface-2);
     border: 1px solid var(--line);
@@ -501,7 +554,6 @@
     margin-left: auto;
   }
 
-  /* ===== FORM ===== */
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -554,7 +606,6 @@
     margin-top: 8px;
   }
 
-  /* ===== MODAL ===== */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -607,7 +658,6 @@
   }
   .modal .btn-row .btn { flex: 1; }
 
-  /* ===== CAMERA OVERLAY ===== */
   #camera-overlay {
     position: fixed;
     inset: 0;
@@ -685,7 +735,6 @@
     width: 100%;
   }
 
-  /* ===== LOGIN MODAL ===== */
   #login-modal .modal {
     max-width: 400px;
   }
@@ -708,7 +757,6 @@
     border-radius: 8px;
   }
 
-  /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
     .sidebar {
       transform: translateX(-100%);
@@ -796,8 +844,8 @@
 </head>
 <body>
 
-<!-- ===== TOAST ===== -->
-<div id="app-toast"></div>
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- ===== LOADING OVERLAY ===== -->
 <div class="loading-overlay" id="loading-overlay">
@@ -807,7 +855,7 @@
 
 <!-- ===== SIDEBAR ===== -->
 <nav class="sidebar" id="sidebar">
-  <div class="sidebar-brand">inter<span>Skala</span></div>
+  <div class="sidebar-brand">Gudang<span>Alat</span></div>
   
   <ul class="sidebar-menu">
     <li class="menu-label">Menu Utama</li>
@@ -822,7 +870,6 @@
     <li><a class="admin-menu" data-page="produk" onclick="navigateTo('produk')"><i class="fas fa-cubes"></i> Produk Selesai</a></li>
   </ul>
   
-  <!-- ===== USER SECTION ===== -->
   <div class="sidebar-user">
     <div class="user-info">
       <div class="avatar" id="user-avatar">👤</div>
@@ -840,7 +887,6 @@
 <!-- ===== MAIN ===== -->
 <div class="main" id="main">
   
-  <!-- HEADER -->
   <header class="header">
     <div class="header-left">
       <button class="menu-toggle" onclick="toggleSidebar()">
@@ -856,10 +902,8 @@
     </div>
   </header>
 
-  <!-- CONTENT -->
   <div class="content">
 
-    <!-- ===== PAGE: DASHBOARD ===== -->
     <div id="page-dashboard">
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card"><div class="label">Total Alat</div><div class="value accent" id="stat-total">...</div></div>
@@ -888,7 +932,6 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: PROJECTS ===== -->
     <div id="page-projects" class="hidden">
       <div class="flex-between mb-2">
         <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;">📋 Projects</h2>
@@ -897,11 +940,9 @@
       <div id="project-list"></div>
     </div>
 
-    <!-- ===== PAGE: PINJAM ===== -->
     <div id="page-pinjam" class="hidden">
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;margin-bottom:16px;">📤 Pinjam Alat</h2>
       
-      <!-- Form Pinjam -->
       <div class="card">
         <div class="card-header"><h3>Form Peminjaman</h3></div>
         <div class="form-grid">
@@ -943,7 +984,6 @@
         <button class="btn btn-primary w-full mt-2" id="btn-pinjam" onclick="submitPinjam()"><i class="fas fa-check"></i> Pinjam Sekarang</button>
       </div>
       
-      <!-- Daftar Peminjaman Aktif -->
       <div class="card">
         <div class="card-header">
           <h3>📋 Sedang Dipinjam</h3>
@@ -953,7 +993,6 @@
       </div>
     </div>
 
-    <!-- ===== PAGE: KEMBALI ===== -->
     <div id="page-kembali" class="hidden">
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;margin-bottom:16px;">↩️ Kembalikan Alat</h2>
       <div class="card">
@@ -968,7 +1007,6 @@
       <div id="kembali-list"></div>
     </div>
 
-    <!-- ===== PAGE: INVENTARIS ===== -->
     <div id="page-inventaris" class="hidden">
       <div class="flex-between mb-2">
         <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;">📦 Inventory Alat</h2>
@@ -977,7 +1015,6 @@
       <div id="inventaris-list"></div>
     </div>
 
-    <!-- ===== PAGE: SPAREPART ===== -->
     <div id="page-sparepart" class="hidden">
       <div class="flex-between mb-2">
         <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;">🔧 Inventory Sparepart</h2>
@@ -986,7 +1023,6 @@
       <div id="sparepart-list"></div>
     </div>
 
-    <!-- ===== PAGE: PRODUK ===== -->
     <div id="page-produk" class="hidden">
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:600;margin-bottom:16px;">🏷️ Produk Selesai</h2>
       <div id="produk-list"></div>
@@ -1019,6 +1055,7 @@
     <label>Password</label>
     <input type="password" id="login-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter')doLogin()">
     <div class="login-error" id="login-error">❌ Username atau password salah!</div>
+    <div class="login-hint">💡 Default: <strong>admin</strong> / <strong>ap</strong></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('login-modal')">Batal</button>
       <button class="btn btn-primary" id="btn-login-submit" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
@@ -1102,6 +1139,36 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4H99LTwfAK8aJu26yI9HSjW6tib_RverpJBodk8nf16gOxA6SQfWWKbkgRcgGDaRW/exec';
 
 // =========================================================
+// TOAST NOTIFICATION
+// =========================================================
+function showToast(message, type = 'success', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  const icons = {
+    success: '✅',
+    error: '❌',
+    info: 'ℹ️'
+  };
+  
+  const toast = document.createElement('div');
+  toast.className = `toast progress`;
+  toast.innerHTML = `
+    <span class="icon ${type}">${icons[type] || 'ℹ️'}</span>
+    <div class="message">${message}</div>
+    <button class="close-toast" onclick="this.parentElement.remove()">✕</button>
+    <div class="progress-bar ${type}"></div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Auto remove after duration
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.remove();
+    }
+  }, duration);
+}
+
+// =========================================================
 // STATE
 // =========================================================
 let currentFoto = null;
@@ -1115,20 +1182,6 @@ let spareparts = [];
 let isLoggedIn = false;
 let currentUser = null;
 let isProcessing = false;
-
-// =========================================================
-// TOAST NOTIFICATION (pesan sukses, hilang otomatis)
-// =========================================================
-let toastTimer = null;
-function showToast(message, duration = 3000) {
-  const toast = document.getElementById('app-toast');
-  toast.innerHTML = '<span class="toast-icon"><i class="fas fa-check"></i></span><span>' + message + '</span>';
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.remove('show');
-  }, duration);
-}
 
 // =========================================================
 // LOADING INDICATOR
@@ -1253,6 +1306,7 @@ function doLogin() {
     localStorage.setItem('auth_user', JSON.stringify(currentUser));
     closeModal('login-modal');
     updateUIForAuth();
+    showToast('✅ Login berhasil! Selamat datang ' + username, 'success');
     const activePage = document.querySelector('.sidebar-menu a.active');
     if (activePage) {
       navigateTo(activePage.dataset.page);
@@ -1269,6 +1323,7 @@ function doLogout() {
   currentUser = null;
   localStorage.removeItem('auth_user');
   updateUIForAuth();
+  showToast('👋 Logout berhasil', 'info');
   navigateTo('dashboard');
 }
 
@@ -1299,7 +1354,7 @@ function toggleSidebar() {
 
 function navigateTo(page) {
   if (['inventaris', 'sparepart', 'produk'].includes(page) && !isLoggedIn) {
-    alert('🔐 Silakan login terlebih dahulu untuk mengakses menu ini.');
+    showToast('🔐 Silakan login terlebih dahulu', 'error');
     toggleLogin();
     return;
   }
@@ -1643,7 +1698,7 @@ const saveProjectWithLoading = withLoading(async function() {
   const desc = document.getElementById('project-desc').value.trim();
   const status = document.getElementById('project-status').value;
   
-  if (!name) { alert('Masukkan nama project!'); return; }
+  if (!name) { showToast('⚠️ Masukkan nama project!', 'error'); return; }
   
   if (id) {
     const idx = projects.findIndex(p => p.id === id);
@@ -1664,7 +1719,7 @@ const saveProjectWithLoading = withLoading(async function() {
   loadProjects();
   loadDashboard();
   saveToLocalStorage();
-  showToast(document.getElementById('project-edit-id').value ? 'Project diperbarui' : 'Project baru dibuat');
+  showToast('✅ Project berhasil disimpan!', 'success');
 }, 'Menyimpan project');
 
 function saveProject() {
@@ -1688,7 +1743,7 @@ const markProjectDoneWithLoading = withLoading(async function(id) {
     loadProjects();
     loadDashboard();
     saveToLocalStorage();
-    showToast('Project dipindahkan ke Produk Selesai');
+    showToast('✅ Project dipindahkan ke Produk Selesai!', 'success');
   }
 }, 'Memindahkan ke produk');
 
@@ -1702,7 +1757,7 @@ function deleteProject(id) {
   loadProjects();
   loadDashboard();
   saveToLocalStorage();
-  showToast('Project dihapus');
+  showToast('🗑️ Project dihapus', 'info');
 }
 
 // =========================================================
@@ -1792,22 +1847,22 @@ const submitPinjamWithLoading = withLoading(async function() {
   
   if (sel.value === '__other__') {
     barang = document.getElementById('p-barang-manual').value.trim();
-    if (!barang) { alert('Isi nama barang!'); return; }
+    if (!barang) { showToast('⚠️ Isi nama barang!', 'error'); return; }
   } else if (sel.value) {
     const opt = sel.options[sel.selectedIndex];
     barang = opt.dataset.nama || opt.textContent;
     kodeAlat = sel.value;
   } else {
-    alert('Pilih alat!');
+    showToast('⚠️ Pilih alat!', 'error');
     return;
   }
   
   if (!nama || !divisi || !tanggal || !jam) {
-    alert('Lengkapi semua data!');
+    showToast('⚠️ Lengkapi semua data!', 'error');
     return;
   }
   if (!currentFoto) {
-    alert('Ambil foto barang!');
+    showToast('⚠️ Ambil foto barang!', 'error');
     return;
   }
   
@@ -1826,41 +1881,41 @@ const submitPinjamWithLoading = withLoading(async function() {
   loadPinjamList();
   loadDashboard();
   
-  showToast('Peminjaman berhasil dicatat');
+  showToast('✅ ' + nama + ' berhasil meminjam "' + barang + '"', 'success');
 }, 'Memproses peminjaman');
 
 function submitPinjam() {
   submitPinjamWithLoading();
 }
 
-const quickReturnWithLoading = withLoading(async function(id, barang) {
-  if (!confirm(`Kembalikan "${barang}"?`)) return;
-  
-  return new Promise((resolve, reject) => {
-    startCamera('kembali', async (foto) => {
-      if (!foto) { alert('Foto diperlukan!'); resolve(); return; }
-      try {
-        await apiPost({
-          action: 'kembalikan',
-          id,
-          tanggalKembali: todayStr(),
-          jamKembali: nowTimeStr(),
-          foto
-        });
-        loadPinjamList();
-        loadDashboard();
-        showToast('Barang berhasil dikembalikan');
-        resolve();
-      } catch (err) {
-        alert('❌ Gagal: ' + err.message);
-        reject(err);
-      }
-    });
-  });
-}, 'Memproses pengembalian');
-
+// ===== QUICK RETURN - TANPA LOADING SEBELUM FOTO =====
 function quickReturn(id, barang) {
-  quickReturnWithLoading(id, barang);
+  if (!confirm(`📸 Kembalikan "${barang}"?\n\nAmbil foto kondisi barang terlebih dahulu.`)) return;
+  
+  startCamera('kembali', async (foto) => {
+    if (!foto) { 
+      showToast('⚠️ Foto diperlukan untuk pengembalian!', 'error');
+      return; 
+    }
+    
+    showLoading('Memproses pengembalian');
+    try {
+      await apiPost({
+        action: 'kembalikan',
+        id,
+        tanggalKembali: todayStr(),
+        jamKembali: nowTimeStr(),
+        foto
+      });
+      loadPinjamList();
+      loadDashboard();
+      showToast('✅ "' + barang + '" berhasil dikembalikan!', 'success');
+    } catch (err) {
+      showToast('❌ Gagal: ' + err.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  });
 }
 
 // =========================================================
@@ -1868,7 +1923,7 @@ function quickReturn(id, barang) {
 // =========================================================
 async function searchKembalikan() {
   const nama = document.getElementById('k-nama').value.trim();
-  if (!nama) { alert('Masukkan nama peminjam!'); return; }
+  if (!nama) { showToast('⚠️ Masukkan nama peminjam!', 'error'); return; }
   
   const btn = document.getElementById('btn-cari-kembali');
   btn.disabled = true;
@@ -1905,35 +1960,35 @@ async function searchKembalikan() {
   }
 }
 
-const openReturnWithLoading = withLoading(async function(id, barang) {
-  if (!confirm(`Kembalikan "${barang}"?`)) return;
-  
-  return new Promise((resolve, reject) => {
-    startCamera('kembali', async (foto) => {
-      if (!foto) { alert('Foto diperlukan!'); resolve(); return; }
-      try {
-        await apiPost({
-          action: 'kembalikan',
-          id,
-          tanggalKembali: todayStr(),
-          jamKembali: nowTimeStr(),
-          foto
-        });
-        document.getElementById('k-nama').value = '';
-        document.getElementById('kembali-list').innerHTML = '';
-        loadDashboard();
-        showToast('Barang berhasil dikembalikan');
-        resolve();
-      } catch (err) {
-        alert('❌ Gagal: ' + err.message);
-        reject(err);
-      }
-    });
-  });
-}, 'Memproses pengembalian');
-
+// ===== OPEN RETURN - TANPA LOADING SEBELUM FOTO =====
 function openReturn(id, barang) {
-  openReturnWithLoading(id, barang);
+  if (!confirm(`📸 Kembalikan "${barang}"?\n\nAmbil foto kondisi barang terlebih dahulu.`)) return;
+  
+  startCamera('kembali', async (foto) => {
+    if (!foto) { 
+      showToast('⚠️ Foto diperlukan untuk pengembalian!', 'error');
+      return; 
+    }
+    
+    showLoading('Memproses pengembalian');
+    try {
+      await apiPost({
+        action: 'kembalikan',
+        id,
+        tanggalKembali: todayStr(),
+        jamKembali: nowTimeStr(),
+        foto
+      });
+      document.getElementById('k-nama').value = '';
+      document.getElementById('kembali-list').innerHTML = '';
+      loadDashboard();
+      showToast('✅ "' + barang + '" berhasil dikembalikan!', 'success');
+    } catch (err) {
+      showToast('❌ Gagal: ' + err.message, 'error');
+    } finally {
+      hideLoading();
+    }
+  });
 }
 
 // =========================================================
@@ -1986,11 +2041,11 @@ const submitInventarisWithLoading = withLoading(async function() {
   const kondisi = document.getElementById('i-kondisi').value;
   
   if (!kode || !nama || !spek) {
-    alert('Lengkapi semua data!');
+    showToast('⚠️ Lengkapi semua data!', 'error');
     return;
   }
   if (!currentFotoInv) {
-    alert('Ambil foto alat!');
+    showToast('⚠️ Ambil foto alat!', 'error');
     return;
   }
   
@@ -2002,7 +2057,7 @@ const submitInventarisWithLoading = withLoading(async function() {
   closeModal('inventaris-modal');
   loadInventaris();
   loadDashboard();
-  showToast('Alat berhasil ditambahkan');
+  showToast('✅ Alat "' + nama + '" berhasil ditambahkan!', 'success');
 }, 'Menyimpan alat');
 
 function submitInventaris() {
@@ -2012,16 +2067,16 @@ function submitInventaris() {
 async function deleteInventaris(kode) {
   if (!confirm('Hapus alat ini?')) return;
   const pass = prompt('Masukkan password (ap):');
-  if (pass !== 'ap') { alert('Password salah!'); return; }
+  if (pass !== 'ap') { showToast('❌ Password salah!', 'error'); return; }
   
   showLoading('Menghapus alat');
   try {
     await apiPost({ action: 'inventaris_delete', kode, password: pass });
     loadInventaris();
     loadDashboard();
-    showToast('Alat berhasil dihapus');
+    showToast('🗑️ Alat berhasil dihapus', 'info');
   } catch (err) {
-    alert('❌ Gagal: ' + err.message);
+    showToast('❌ Gagal: ' + err.message, 'error');
   } finally {
     hideLoading();
   }
@@ -2031,12 +2086,15 @@ function editKondisi(kode) {
   const newKondisi = prompt('Masukkan kondisi baru (Baik/Rusak ringan/Rusak berat):');
   if (!newKondisi) return;
   const pass = prompt('Password (ap):');
-  if (pass !== 'ap') { alert('Password salah!'); return; }
+  if (pass !== 'ap') { showToast('❌ Password salah!', 'error'); return; }
   
   showLoading('Mengupdate kondisi');
   apiPost({ action: 'inventaris_update_kondisi', kode, kondisi: newKondisi, password: pass })
-    .then(() => { showToast('Kondisi berhasil diupdate'); loadInventaris(); })
-    .catch(err => alert('❌ Gagal: ' + err.message))
+    .then(() => { 
+      showToast('✅ Kondisi berhasil diupdate!', 'success');
+      loadInventaris(); 
+    })
+    .catch(err => showToast('❌ Gagal: ' + err.message, 'error'))
     .finally(() => hideLoading());
 }
 
@@ -2081,11 +2139,11 @@ function submitSparepart() {
   const stok = parseInt(document.getElementById('s-stok').value) || 0;
   const lokasi = document.getElementById('s-lokasi').value.trim();
   
-  if (!kode || !nama) { alert('Lengkapi data!'); return; }
+  if (!kode || !nama) { showToast('⚠️ Lengkapi data!', 'error'); return; }
   
   const data = JSON.parse(localStorage.getItem('spareparts') || '[]');
   if (data.some(x => x.kode === kode)) {
-    alert('Kode sudah dipakai!');
+    showToast('⚠️ Kode sudah dipakai!', 'error');
     return;
   }
   
@@ -2093,7 +2151,7 @@ function submitSparepart() {
   localStorage.setItem('spareparts', JSON.stringify(data));
   closeModal('sparepart-modal');
   loadSparepart();
-  showToast('Sparepart berhasil ditambahkan');
+  showToast('✅ Sparepart "' + nama + '" berhasil ditambahkan!', 'success');
 }
 
 function deleteSparepart(id) {
@@ -2102,7 +2160,7 @@ function deleteSparepart(id) {
   data = data.filter(x => x.id !== id);
   localStorage.setItem('spareparts', JSON.stringify(data));
   loadSparepart();
-  showToast('Sparepart dihapus');
+  showToast('🗑️ Sparepart dihapus', 'info');
 }
 
 function editSparepart(id) {
@@ -2115,7 +2173,7 @@ function editSparepart(id) {
   item.stok = parseInt(newStok) || 0;
   localStorage.setItem('spareparts', JSON.stringify(data));
   loadSparepart();
-  showToast('Stok berhasil diupdate');
+  showToast('✅ Stok diupdate menjadi ' + item.stok, 'success');
 }
 
 // =========================================================
@@ -2149,7 +2207,7 @@ function deleteProduk(id) {
   data = data.filter(x => x.id !== id);
   localStorage.setItem('produk', JSON.stringify(data));
   loadProduk();
-  showToast('Produk dihapus');
+  showToast('🗑️ Produk dihapus', 'info');
 }
 
 // =========================================================
@@ -2230,9 +2288,9 @@ loadDashboard();
 
 console.log('🚀 Aplikasi siap!');
 console.log('📌 Login: admin / ap');
-console.log('📌 Guest: hanya bisa akses Dashboard, Projects, Pinjam, Kembalikan');
-console.log('📌 Admin: semua menu termasuk Inventory dan Produk');
-console.log('📌 Loading overlay muncul saat proses simpan');
+console.log('📌 Notifikasi toast muncul 3 detik tanpa klik OK');
+console.log('📌 Guest: Dashboard, Projects, Pinjam, Kembalikan');
+console.log('📌 Admin: semua menu');
 </script>
 </body>
 </html>
