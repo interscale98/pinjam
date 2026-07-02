@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gudang Alat — Dashboard</title>
+<title>interSkala — Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,6 +38,47 @@
     display: flex;
     min-height: 100vh;
     overflow-x: hidden;
+  }
+
+  /* ===== TOAST NOTIFICATION ===== */
+  #app-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: var(--surface);
+    border: 1px solid var(--ok);
+    color: var(--ink);
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 90vw;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #app-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #app-toast .toast-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--ok);
+    color: #0E1A12;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
   }
 
   /* ===== SIDEBAR ===== */
@@ -755,6 +796,9 @@
 </head>
 <body>
 
+<!-- ===== TOAST ===== -->
+<div id="app-toast"></div>
+
 <!-- ===== LOADING OVERLAY ===== -->
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner"></div>
@@ -1071,6 +1115,20 @@ let spareparts = [];
 let isLoggedIn = false;
 let currentUser = null;
 let isProcessing = false;
+
+// =========================================================
+// TOAST NOTIFICATION (pesan sukses, hilang otomatis)
+// =========================================================
+let toastTimer = null;
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('app-toast');
+  toast.innerHTML = '<span class="toast-icon"><i class="fas fa-check"></i></span><span>' + message + '</span>';
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, duration);
+}
 
 // =========================================================
 // LOADING INDICATOR
@@ -1606,6 +1664,7 @@ const saveProjectWithLoading = withLoading(async function() {
   loadProjects();
   loadDashboard();
   saveToLocalStorage();
+  showToast(document.getElementById('project-edit-id').value ? 'Project diperbarui' : 'Project baru dibuat');
 }, 'Menyimpan project');
 
 function saveProject() {
@@ -1629,6 +1688,7 @@ const markProjectDoneWithLoading = withLoading(async function(id) {
     loadProjects();
     loadDashboard();
     saveToLocalStorage();
+    showToast('Project dipindahkan ke Produk Selesai');
   }
 }, 'Memindahkan ke produk');
 
@@ -1642,6 +1702,7 @@ function deleteProject(id) {
   loadProjects();
   loadDashboard();
   saveToLocalStorage();
+  showToast('Project dihapus');
 }
 
 // =========================================================
@@ -1765,7 +1826,7 @@ const submitPinjamWithLoading = withLoading(async function() {
   loadPinjamList();
   loadDashboard();
   
-  alert('✅ Peminjaman berhasil!');
+  showToast('Peminjaman berhasil dicatat');
 }, 'Memproses peminjaman');
 
 function submitPinjam() {
@@ -1788,7 +1849,7 @@ const quickReturnWithLoading = withLoading(async function(id, barang) {
         });
         loadPinjamList();
         loadDashboard();
-        alert('✅ Barang dikembalikan!');
+        showToast('Barang berhasil dikembalikan');
         resolve();
       } catch (err) {
         alert('❌ Gagal: ' + err.message);
@@ -1861,7 +1922,7 @@ const openReturnWithLoading = withLoading(async function(id, barang) {
         document.getElementById('k-nama').value = '';
         document.getElementById('kembali-list').innerHTML = '';
         loadDashboard();
-        alert('✅ Barang dikembalikan!');
+        showToast('Barang berhasil dikembalikan');
         resolve();
       } catch (err) {
         alert('❌ Gagal: ' + err.message);
@@ -1941,7 +2002,7 @@ const submitInventarisWithLoading = withLoading(async function() {
   closeModal('inventaris-modal');
   loadInventaris();
   loadDashboard();
-  alert('✅ Alat ditambahkan!');
+  showToast('Alat berhasil ditambahkan');
 }, 'Menyimpan alat');
 
 function submitInventaris() {
@@ -1958,7 +2019,7 @@ async function deleteInventaris(kode) {
     await apiPost({ action: 'inventaris_delete', kode, password: pass });
     loadInventaris();
     loadDashboard();
-    alert('✅ Dihapus!');
+    showToast('Alat berhasil dihapus');
   } catch (err) {
     alert('❌ Gagal: ' + err.message);
   } finally {
@@ -1974,7 +2035,7 @@ function editKondisi(kode) {
   
   showLoading('Mengupdate kondisi');
   apiPost({ action: 'inventaris_update_kondisi', kode, kondisi: newKondisi, password: pass })
-    .then(() => { alert('✅ Diupdate!'); loadInventaris(); })
+    .then(() => { showToast('Kondisi berhasil diupdate'); loadInventaris(); })
     .catch(err => alert('❌ Gagal: ' + err.message))
     .finally(() => hideLoading());
 }
@@ -2032,6 +2093,7 @@ function submitSparepart() {
   localStorage.setItem('spareparts', JSON.stringify(data));
   closeModal('sparepart-modal');
   loadSparepart();
+  showToast('Sparepart berhasil ditambahkan');
 }
 
 function deleteSparepart(id) {
@@ -2040,6 +2102,7 @@ function deleteSparepart(id) {
   data = data.filter(x => x.id !== id);
   localStorage.setItem('spareparts', JSON.stringify(data));
   loadSparepart();
+  showToast('Sparepart dihapus');
 }
 
 function editSparepart(id) {
@@ -2052,6 +2115,7 @@ function editSparepart(id) {
   item.stok = parseInt(newStok) || 0;
   localStorage.setItem('spareparts', JSON.stringify(data));
   loadSparepart();
+  showToast('Stok berhasil diupdate');
 }
 
 // =========================================================
@@ -2085,6 +2149,7 @@ function deleteProduk(id) {
   data = data.filter(x => x.id !== id);
   localStorage.setItem('produk', JSON.stringify(data));
   loadProduk();
+  showToast('Produk dihapus');
 }
 
 // =========================================================
