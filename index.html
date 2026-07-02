@@ -332,14 +332,18 @@
     cursor: pointer;
     transition: all 0.2s;
   }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   .btn-primary { background: var(--accent); color: var(--accent-ink); }
-  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:hover:not(:disabled) { opacity: 0.85; }
   .btn-secondary { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
-  .btn-secondary:hover { background: var(--line); }
+  .btn-secondary:hover:not(:disabled) { background: var(--line); }
   .btn-success { background: var(--ok); color: #0E1A12; }
-  .btn-success:hover { opacity: 0.85; }
+  .btn-success:hover:not(:disabled) { opacity: 0.85; }
   .btn-danger { background: var(--stamp); color: #FFF; }
-  .btn-danger:hover { opacity: 0.85; }
+  .btn-danger:hover:not(:disabled) { opacity: 0.85; }
   .btn-sm { padding: 6px 14px; font-size: 12px; }
   .btn-ghost {
     background: transparent;
@@ -347,6 +351,49 @@
     border: none;
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+
+  /* ===== LOADING OVERLAY ===== */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .loading-overlay.show {
+    display: flex;
+  }
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--surface);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    font-size: 16px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .loading-text .dots::after {
+    content: '';
+    animation: dots 1.5s steps(4) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
   }
 
   /* ===== TABLE / LIST ===== */
@@ -548,6 +595,7 @@
     justify-content: space-between;
     align-items: center;
     background: #000;
+    flex-shrink: 0;
   }
   .camera-controls button {
     background: transparent;
@@ -558,20 +606,39 @@
     font-family: 'Inter', sans-serif;
     cursor: pointer;
   }
+  .camera-controls button:hover {
+    opacity: 0.8;
+  }
   .cam-shoot-btn {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .cam-shoot-btn::after {
+    content: '';
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: #E7A339;
-    border: 4px solid rgba(255,255,255,0.35);
-    cursor: pointer;
+    transition: all 0.2s;
   }
-  .cam-shoot-btn:active {
+  .cam-shoot-btn:hover::after {
+    transform: scale(1.05);
+  }
+  .cam-shoot-btn:active::after {
     transform: scale(0.9);
   }
   .camera-confirm-bar {
     padding: 0 20px 24px;
     background: #000;
+    flex-shrink: 0;
   }
   .camera-confirm-bar .btn {
     width: 100%;
@@ -630,6 +697,14 @@
     .form-grid {
       grid-template-columns: 1fr;
     }
+    .cam-shoot-btn {
+      width: 60px;
+      height: 60px;
+    }
+    .cam-shoot-btn::after {
+      width: 46px;
+      height: 46px;
+    }
   }
 
   @media (max-width: 480px) {
@@ -638,6 +713,14 @@
     }
     .stat-card .value {
       font-size: 22px;
+    }
+    .cam-shoot-btn {
+      width: 54px;
+      height: 54px;
+    }
+    .cam-shoot-btn::after {
+      width: 42px;
+      height: 42px;
     }
   }
 
@@ -672,9 +755,15 @@
 </head>
 <body>
 
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Menyimpan data<span class="dots"></span></div>
+</div>
+
 <!-- ===== SIDEBAR ===== -->
 <nav class="sidebar" id="sidebar">
-  <div class="sidebar-brand">Inter<span>Skala</span></div>
+  <div class="sidebar-brand">inter<span>Skala</span></div>
   
   <ul class="sidebar-menu">
     <li class="menu-label">Menu Utama</li>
@@ -807,7 +896,7 @@
             <input type="file" id="p-foto-fallback" accept="image/*" class="hidden">
           </div>
         </div>
-        <button class="btn btn-primary w-full mt-2" onclick="submitPinjam()"><i class="fas fa-check"></i> Pinjam Sekarang</button>
+        <button class="btn btn-primary w-full mt-2" id="btn-pinjam" onclick="submitPinjam()"><i class="fas fa-check"></i> Pinjam Sekarang</button>
       </div>
       
       <!-- Daftar Peminjaman Aktif -->
@@ -828,7 +917,7 @@
           <label>Cari Nama Peminjam</label>
           <div style="display:flex;gap:8px;">
             <input type="text" id="k-nama" placeholder="Nama peminjam" style="flex:1;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;" onkeydown="if(event.key==='Enter')searchKembalikan()">
-            <button class="btn btn-primary" onclick="searchKembalikan()"><i class="fas fa-search"></i> Cari</button>
+            <button class="btn btn-primary" id="btn-cari-kembali" onclick="searchKembalikan()"><i class="fas fa-search"></i> Cari</button>
           </div>
         </div>
       </div>
@@ -867,12 +956,12 @@
   <video id="camera-video" autoplay playsinline muted></video>
   <img id="camera-snapshot" class="hidden">
   <div class="camera-controls">
-    <button id="cam-cancel">Batal</button>
+    <button id="cam-cancel"><i class="fas fa-times"></i> Batal</button>
     <button class="cam-shoot-btn" id="cam-shoot"></button>
-    <button id="cam-retake" class="hidden">Ambil ulang</button>
+    <button id="cam-retake" class="hidden"><i class="fas fa-redo"></i> Ambil ulang</button>
   </div>
   <div id="cam-confirm-bar" class="camera-confirm-bar hidden">
-    <button class="btn btn-primary" id="cam-use">Gunakan foto ini</button>
+    <button class="btn btn-primary" id="cam-use"><i class="fas fa-check"></i> Gunakan foto ini</button>
   </div>
 </div>
 
@@ -888,7 +977,7 @@
     <div class="login-error" id="login-error">❌ Username atau password salah!</div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('login-modal')">Batal</button>
-      <button class="btn btn-primary" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <button class="btn btn-primary" id="btn-login-submit" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
     </div>
   </div>
 </div>
@@ -909,7 +998,7 @@
     </select>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('project-modal')">Batal</button>
-      <button class="btn btn-primary" onclick="saveProject()">Simpan</button>
+      <button class="btn btn-primary" id="btn-save-project" onclick="saveProject()">Simpan</button>
     </div>
   </div>
 </div>
@@ -938,7 +1027,7 @@
     <input type="file" id="i-foto-fallback" accept="image/*" class="hidden">
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('inventaris-modal')">Batal</button>
-      <button class="btn btn-primary" onclick="submitInventaris()">Simpan</button>
+      <button class="btn btn-primary" id="btn-save-inventaris" onclick="submitInventaris()">Simpan</button>
     </div>
   </div>
 </div>
@@ -957,7 +1046,7 @@
     <input type="text" id="s-lokasi" placeholder="Rak/Gudang">
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeModal('sparepart-modal')">Batal</button>
-      <button class="btn btn-primary" onclick="submitSparepart()">Simpan</button>
+      <button class="btn btn-primary" id="btn-save-sparepart" onclick="submitSparepart()">Simpan</button>
     </div>
   </div>
 </div>
@@ -981,6 +1070,33 @@ let projects = [];
 let spareparts = [];
 let isLoggedIn = false;
 let currentUser = null;
+let isProcessing = false;
+
+// =========================================================
+// LOADING INDICATOR
+// =========================================================
+function showLoading(text = 'Menyimpan data') {
+  document.getElementById('loading-text').textContent = text;
+  document.getElementById('loading-overlay').classList.add('show');
+  isProcessing = true;
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+  isProcessing = false;
+}
+
+function withLoading(fn, text = 'Menyimpan data') {
+  return async function(...args) {
+    if (isProcessing) return;
+    showLoading(text);
+    try {
+      await fn(...args);
+    } finally {
+      hideLoading();
+    }
+  };
+}
 
 // =========================================================
 // AUTHENTICATION
@@ -1011,12 +1127,10 @@ function checkAuth() {
 function updateUIForAuth() {
   const isAdmin = isLoggedIn && currentUser?.username === 'admin';
   
-  // Update user info
   document.getElementById('user-name').textContent = isLoggedIn ? currentUser.username : 'Guest';
   document.getElementById('user-role').textContent = isLoggedIn ? 'Admin' : 'Belum login';
   document.getElementById('user-avatar').textContent = isLoggedIn ? '👑' : '👤';
   
-  // Update login button
   const btn = document.getElementById('btn-login');
   if (isLoggedIn) {
     btn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
@@ -1028,10 +1142,8 @@ function updateUIForAuth() {
     btn.onclick = toggleLogin;
   }
   
-  // Update header badge
   document.getElementById('header-badge').textContent = isLoggedIn ? 'Admin' : 'Guest';
   
-  // Show/hide admin menus
   const adminMenus = document.querySelectorAll('.admin-menu');
   const menuLabels = document.querySelectorAll('.menu-label');
   
@@ -1051,7 +1163,6 @@ function updateUIForAuth() {
     }
   });
   
-  // If not logged in and on admin page, redirect to dashboard
   if (!isLoggedIn) {
     const activePage = document.querySelector('.sidebar-menu a.active');
     if (activePage) {
@@ -1070,7 +1181,7 @@ function toggleLogin() {
     document.getElementById('login-modal').classList.add('show');
     document.getElementById('login-error').classList.remove('show');
     document.getElementById('login-password').value = '';
-    document.getElementById('login-password').focus();
+    setTimeout(() => document.getElementById('login-password').focus(), 100);
   }
 }
 
@@ -1084,7 +1195,6 @@ function doLogin() {
     localStorage.setItem('auth_user', JSON.stringify(currentUser));
     closeModal('login-modal');
     updateUIForAuth();
-    // Refresh current page
     const activePage = document.querySelector('.sidebar-menu a.active');
     if (activePage) {
       navigateTo(activePage.dataset.page);
@@ -1130,7 +1240,6 @@ function toggleSidebar() {
 }
 
 function navigateTo(page) {
-  // Check if page is admin-only
   if (['inventaris', 'sparepart', 'produk'].includes(page) && !isLoggedIn) {
     alert('🔐 Silakan login terlebih dahulu untuk mengakses menu ini.');
     toggleLogin();
@@ -1470,7 +1579,7 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('show');
 }
 
-function saveProject() {
+const saveProjectWithLoading = withLoading(async function() {
   const id = document.getElementById('project-edit-id').value;
   const name = document.getElementById('project-name').value.trim();
   const desc = document.getElementById('project-desc').value.trim();
@@ -1497,9 +1606,13 @@ function saveProject() {
   loadProjects();
   loadDashboard();
   saveToLocalStorage();
+}, 'Menyimpan project');
+
+function saveProject() {
+  saveProjectWithLoading();
 }
 
-function markProjectDone(id) {
+const markProjectDoneWithLoading = withLoading(async function(id) {
   if (!confirm('Mark project as DONE? This will move to Produk Selesai.')) return;
   const idx = projects.findIndex(p => p.id === id);
   if (idx !== -1) {
@@ -1517,6 +1630,10 @@ function markProjectDone(id) {
     loadDashboard();
     saveToLocalStorage();
   }
+}, 'Memindahkan ke produk');
+
+function markProjectDone(id) {
+  markProjectDoneWithLoading(id);
 }
 
 function deleteProject(id) {
@@ -1603,7 +1720,7 @@ function onBarangSelectChange() {
   }
 }
 
-async function submitPinjam() {
+const submitPinjamWithLoading = withLoading(async function() {
   const nama = document.getElementById('p-nama').value.trim();
   const divisi = document.getElementById('p-divisi').value.trim();
   const sel = document.getElementById('p-barang-select');
@@ -1633,45 +1750,56 @@ async function submitPinjam() {
     return;
   }
   
-  try {
-    const id = 'l' + Date.now() + Math.random().toString(36).slice(2,7);
-    await apiPost({
-      action: 'pinjam', id, nama, divisi, barang, kodeAlat,
-      tanggalPinjam: tanggal, jamPinjam: jam, foto: currentFoto
-    });
-    alert('✅ Peminjaman berhasil!');
-    currentFoto = null;
-    document.getElementById('p-foto-preview').style.display = 'none';
-    document.getElementById('p-foto-label').innerHTML = '<i class="fas fa-camera"></i> Ketuk untuk foto';
-    document.getElementById('p-nama').value = '';
-    document.getElementById('p-divisi').value = '';
-    loadPinjamForm();
-    loadPinjamList();
-    loadDashboard();
-  } catch (err) {
-    alert('❌ Gagal: ' + err.message);
-  }
+  const id = 'l' + Date.now() + Math.random().toString(36).slice(2,7);
+  await apiPost({
+    action: 'pinjam', id, nama, divisi, barang, kodeAlat,
+    tanggalPinjam: tanggal, jamPinjam: jam, foto: currentFoto
+  });
+  
+  currentFoto = null;
+  document.getElementById('p-foto-preview').style.display = 'none';
+  document.getElementById('p-foto-label').innerHTML = '<i class="fas fa-camera"></i> Ketuk untuk foto';
+  document.getElementById('p-nama').value = '';
+  document.getElementById('p-divisi').value = '';
+  loadPinjamForm();
+  loadPinjamList();
+  loadDashboard();
+  
+  alert('✅ Peminjaman berhasil!');
+}, 'Memproses peminjaman');
+
+function submitPinjam() {
+  submitPinjamWithLoading();
 }
 
-function quickReturn(id, barang) {
+const quickReturnWithLoading = withLoading(async function(id, barang) {
   if (!confirm(`Kembalikan "${barang}"?`)) return;
-  startCamera('kembali', async (foto) => {
-    if (!foto) { alert('Foto diperlukan!'); return; }
-    try {
-      await apiPost({
-        action: 'kembalikan',
-        id,
-        tanggalKembali: todayStr(),
-        jamKembali: nowTimeStr(),
-        foto
-      });
-      alert('✅ Barang dikembalikan!');
-      loadPinjamList();
-      loadDashboard();
-    } catch (err) {
-      alert('❌ Gagal: ' + err.message);
-    }
+  
+  return new Promise((resolve, reject) => {
+    startCamera('kembali', async (foto) => {
+      if (!foto) { alert('Foto diperlukan!'); resolve(); return; }
+      try {
+        await apiPost({
+          action: 'kembalikan',
+          id,
+          tanggalKembali: todayStr(),
+          jamKembali: nowTimeStr(),
+          foto
+        });
+        loadPinjamList();
+        loadDashboard();
+        alert('✅ Barang dikembalikan!');
+        resolve();
+      } catch (err) {
+        alert('❌ Gagal: ' + err.message);
+        reject(err);
+      }
+    });
   });
+}, 'Memproses pengembalian');
+
+function quickReturn(id, barang) {
+  quickReturnWithLoading(id, barang);
 }
 
 // =========================================================
@@ -1680,6 +1808,10 @@ function quickReturn(id, barang) {
 async function searchKembalikan() {
   const nama = document.getElementById('k-nama').value.trim();
   if (!nama) { alert('Masukkan nama peminjam!'); return; }
+  
+  const btn = document.getElementById('btn-cari-kembali');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
   
   const list = document.getElementById('kembali-list');
   list.innerHTML = '<div class="text-soft text-sm">🔍 Mencari...</div>';
@@ -1706,29 +1838,41 @@ async function searchKembalikan() {
     `).join('');
   } catch (err) {
     list.innerHTML = '<div class="text-soft text-sm">❌ Gagal: ' + err.message + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-search"></i> Cari';
   }
 }
 
-function openReturn(id, barang) {
+const openReturnWithLoading = withLoading(async function(id, barang) {
   if (!confirm(`Kembalikan "${barang}"?`)) return;
-  startCamera('kembali', async (foto) => {
-    if (!foto) { alert('Foto diperlukan!'); return; }
-    try {
-      await apiPost({
-        action: 'kembalikan',
-        id,
-        tanggalKembali: todayStr(),
-        jamKembali: nowTimeStr(),
-        foto
-      });
-      alert('✅ Barang dikembalikan!');
-      document.getElementById('k-nama').value = '';
-      document.getElementById('kembali-list').innerHTML = '';
-      loadDashboard();
-    } catch (err) {
-      alert('❌ Gagal: ' + err.message);
-    }
+  
+  return new Promise((resolve, reject) => {
+    startCamera('kembali', async (foto) => {
+      if (!foto) { alert('Foto diperlukan!'); resolve(); return; }
+      try {
+        await apiPost({
+          action: 'kembalikan',
+          id,
+          tanggalKembali: todayStr(),
+          jamKembali: nowTimeStr(),
+          foto
+        });
+        document.getElementById('k-nama').value = '';
+        document.getElementById('kembali-list').innerHTML = '';
+        loadDashboard();
+        alert('✅ Barang dikembalikan!');
+        resolve();
+      } catch (err) {
+        alert('❌ Gagal: ' + err.message);
+        reject(err);
+      }
+    });
   });
+}, 'Memproses pengembalian');
+
+function openReturn(id, barang) {
+  openReturnWithLoading(id, barang);
 }
 
 // =========================================================
@@ -1774,7 +1918,7 @@ function openInventarisAdd() {
   document.getElementById('inventaris-modal').classList.add('show');
 }
 
-async function submitInventaris() {
+const submitInventarisWithLoading = withLoading(async function() {
   const kode = document.getElementById('i-kode').value.trim();
   const nama = document.getElementById('i-nama').value.trim();
   const spek = document.getElementById('i-spek').value.trim();
@@ -1789,18 +1933,19 @@ async function submitInventaris() {
     return;
   }
   
-  try {
-    await apiPost({
-      action: 'inventaris_add',
-      kode, namaAlat: nama, spesifikasi: spek, kondisi, foto: currentFotoInv
-    });
-    alert('✅ Alat ditambahkan!');
-    closeModal('inventaris-modal');
-    loadInventaris();
-    loadDashboard();
-  } catch (err) {
-    alert('❌ Gagal: ' + err.message);
-  }
+  await apiPost({
+    action: 'inventaris_add',
+    kode, namaAlat: nama, spesifikasi: spek, kondisi, foto: currentFotoInv
+  });
+  
+  closeModal('inventaris-modal');
+  loadInventaris();
+  loadDashboard();
+  alert('✅ Alat ditambahkan!');
+}, 'Menyimpan alat');
+
+function submitInventaris() {
+  submitInventarisWithLoading();
 }
 
 async function deleteInventaris(kode) {
@@ -1808,13 +1953,16 @@ async function deleteInventaris(kode) {
   const pass = prompt('Masukkan password (ap):');
   if (pass !== 'ap') { alert('Password salah!'); return; }
   
+  showLoading('Menghapus alat');
   try {
     await apiPost({ action: 'inventaris_delete', kode, password: pass });
-    alert('✅ Dihapus!');
     loadInventaris();
     loadDashboard();
+    alert('✅ Dihapus!');
   } catch (err) {
     alert('❌ Gagal: ' + err.message);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -1824,9 +1972,11 @@ function editKondisi(kode) {
   const pass = prompt('Password (ap):');
   if (pass !== 'ap') { alert('Password salah!'); return; }
   
+  showLoading('Mengupdate kondisi');
   apiPost({ action: 'inventaris_update_kondisi', kode, kondisi: newKondisi, password: pass })
     .then(() => { alert('✅ Diupdate!'); loadInventaris(); })
-    .catch(err => alert('❌ Gagal: ' + err.message));
+    .catch(err => alert('❌ Gagal: ' + err.message))
+    .finally(() => hideLoading());
 }
 
 // =========================================================
@@ -1992,8 +2142,6 @@ function loadFromLocalStorage() {
 // INIT
 // =========================================================
 loadFromLocalStorage();
-
-// Check authentication status
 checkAuth();
 
 window.addEventListener('resize', () => {
@@ -2019,6 +2167,7 @@ console.log('🚀 Aplikasi siap!');
 console.log('📌 Login: admin / ap');
 console.log('📌 Guest: hanya bisa akses Dashboard, Projects, Pinjam, Kembalikan');
 console.log('📌 Admin: semua menu termasuk Inventory dan Produk');
+console.log('📌 Loading overlay muncul saat proses simpan');
 </script>
 </body>
 </html>
